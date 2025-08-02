@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aayushi Fashions - Billing</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #fceabb, #f8b500);
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #6a1b9a;
+      font-size: 2rem;
+    }
+    #billContent {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 850px;
+      margin: 20px auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    input[type="number"], select {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .btns {
+      display: flex;
+      gap: 5px;
+    }
+    .btns button {
+      background-color: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .share-btn {
+      display: block;
+      margin: 30px auto 0;
+      background-color: #25D366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .footer {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 40px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Aayushi Fashions - Billing</h1>
+  <div id="billContent">
+    <div id="estimateNum"></div>
+    <div id="itemsContainer"></div>
+    
+    <p>
+      Discount: 
+      <input type="number" id="billDiscount" placeholder="Discount" oninput="calculateTotals()">
+      <select id="discountType" onchange="calculateTotals()">
+        <option value="₹">₹</option>
+        <option value="%">%</option>
+      </select>
+    </p>
+    <p id="grandTotal">Grand Total: Rs. 0.00</p>
+    <p>
+      Paid Amount: <input type="number" id="paidAmount" placeholder="Paid Amount" oninput="calculateTotals()">
+    </p>
+    <p>
+      Payment Method:
+      <select id="paymentMethod">
+        <option value="">Select</option>
+        <option value="Cash">Cash</option>
+        <option value="Online">Online</option>
+      </select>
+    </p>
+  </div>
+  
+  <button class="share-btn" onclick="shareOnWhatsApp()">📤 Share on WhatsApp</button>
+  <div class="footer">© 2025 Aayushi Fashions. All rights reserved.</div>
+
+  <script>
+    function getNextEstimateNumber() {
+      let lastNum = localStorage.getItem("lastEstimateNumber") || 0;
+      let nextNum = parseInt(lastNum) + 1;
+      localStorage.setItem("lastEstimateNumber", nextNum);
+      return `EST-${String(nextNum).padStart(3, '0')}`;
+    }
+
+    let currentEstimateNumber = getNextEstimateNumber();
+
+    function updateEstimateDisplay() {
+      document.getElementById("estimateNum").textContent = `Estimate No: ${currentEstimateNumber}`;
+    }
+
+    function addItem() {
+      const container = document.getElementById('itemsContainer');
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <select class="itemName" onchange="calculateTotals()">
+          <option value="">Select Item</option>
+          <option value="Chuda Rakhi">Chuda Rakhi</option>
+          <option value="Baccha Rakhi">Baccha Rakhi</option>
+          <option value="Rakhi">Rakhi</option>
+        </select>
+        <input type="number" class="amount" placeholder="Rate" oninput="calculateTotals()">
+        <input type="number" class="quantity" placeholder="Qty" oninput="calculateTotals()">
+        <div class="btns">
+          <button onclick="addItem()">➕</button>
+          <button onclick="removeItem(this)">❌</button>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeItem(btn) {
+      const item = btn.closest('.item');
+      if (item) {
+        item.remove();
+        calculateTotals();
+      }
+    }
+
+    function calculateTotals() {
+      let total = 0;
+      document.querySelectorAll('.item').forEach(item => {
+        const amt = parseFloat(item.querySelector('.amount').value) || 0;
+        const qty = parseFloat(item.querySelector('.quantity').value) || 0;
+        total += amt * qty;
+      });
+
+      // Apply discount to total bill
+      const discount = parseFloat(document.getElementById('billDiscount').value) || 0;
+      const discountType = document.getElementById('discountType').value;
+      if (discountType === "₹") {
+        total -= discount;
+      } else if (discountType === "%") {
+        total -= (total * discount / 100);
+      }
+
+      document.getElementById('grandTotal').textContent = `Grand Total: Rs. ${total.toFixed(2)}`;
+    }
+
+    function shareOnWhatsApp() {
+      currentEstimateNumber = getNextEstimateNumber();
+      updateEstimateDisplay();
+
+      const now = new Date();
+      const date = now.toLocaleDateString();
+      const time = now.toLocaleTimeString();
+
+      let message = `🧾 *Estimate – Aayushi Fashions*\n`;
+      message += `Estimate No: ${currentEstimateNumber}\n`;
+      message += `️️ Date: ${date}\n🕒 Time: ${time}\n\n`;
+      message += "--------------------------------------\n";
+      message += "No.  Item         Rate   Qty   Total\n";
+      message += "--------------------------------------\n";
+
+      let grandTotal = 0;
+      const items = document.querySelectorAll('.item');
+      items.forEach((item, i) => {
+        const name = item.querySelector('.itemName').value || "N/A";
+        const amt = parseFloat(item.querySelector('.amount').value) || 0;
+        const qty = parseFloat(item.querySelector('.quantity').value) || 0;
+        const total = amt * qty;
+        grandTotal += total;
+        message += `${i + 1}. ${name}  Rs.${amt} x${qty}  Rs.${total.toFixed(2)}\n`;
+      });
+
+      // Apply bill discount
+      const discount = parseFloat(document.getElementById('billDiscount').value) || 0;
+      const discountType = document.getElementById('discountType').value;
+      if (discount > 0) {
+        if (discountType === "₹") {
+          grandTotal -= discount;
+          message += `\n💲 Discount: Rs.${discount}`;
+        } else if (discountType === "%") {
+          grandTotal -= (grandTotal * discount / 100);
+          message += `\n💲 Discount: ${discount}%`;
+        }
+      }
+
+      const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+      const paymentMethod = document.getElementById('paymentMethod').value;
+
+      message += "\n--------------------------------------\n";
+      message += `💰 *Grand Total:* Rs. ${grandTotal.toFixed(2)}\n`;
+      if (paid > 0) {
+        message += `✅ *Paid:* Rs. ${paid.toFixed(2)}\n`;
+      }
+      if (paymentMethod) {
+        message += `📌 Payment Mode: ${paymentMethod}\n`;
+      }
+      message += "\n🙏 Thank you for choosing *Aayushi Fashions*!";
+
+      const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
+
+    window.onload = function () {
+      addItem();
+      updateEstimateDisplay();
+    };
+  </script>
+</body>
+</html>
